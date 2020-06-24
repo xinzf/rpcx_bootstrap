@@ -51,23 +51,16 @@ func (this *client) Meta(mp map[string]string) *client {
 	return this
 }
 
-func (this *client) Call(name string, req, rsp interface{}) error {
-	if this.err != nil {
-		return this.err
-	}
+func (this *client) callInProcess(svcPath, svcMethod string, req, rsp interface{}) error {
+	d := rpcx_client.NewInprocessDiscovery()
+	xclient := rpcx_client.NewXClient(svcPath, rpcx_client.Failtry, rpcx_client.RandomSelect, d, rpcx_client.DefaultOption)
+	defer xclient.Close()
 
-	strs := strings.Split(name, ".")
-	if len(strs) < 3 {
-		return errors.New("call service name is unvalid")
-	}
+	err := xclient.Call(context.Background(), svcMethod, req, rsp)
+	return err
+}
 
-	basePath := strs[0]
-	svcName := strs[1]
-	methodName := strings.Join(strs[2:], ".")
-
-	if basePath == "" || svcName == "" || methodName == "" {
-		return errors.New("call service name is unvalid")
-	}
+func (this *client) callDiscovery(basePath, svcPath, svcMethod string, req, rsp interface{}) error {
 
 	options := rpcx_client.DefaultOption
 	options.ReadTimeout = time.Duration(Config.Client.ReadTimeOut) * time.Second
@@ -92,7 +85,7 @@ func (this *client) Call(name string, req, rsp interface{}) error {
 	ctx := context.WithValue(context.Background(), share.ReqMetaDataKey, metas)
 
 	if this.async {
-		call, err := oneClient.Go(ctx, svcName, methodName, req, rsp, nil)
+		call, err := oneClient.Go(ctx, svcPath, svcMethod, req, rsp, nil)
 		if err != nil {
 			return err
 		}
@@ -103,5 +96,33 @@ func (this *client) Call(name string, req, rsp interface{}) error {
 		}
 		return nil
 	}
-	return oneClient.Call(ctx, svcName, methodName, req, rsp)
+	return oneClient.Call(ctx, svcPath, svcMethod, req, rsp)
+}
+
+func (this *client) Call(name string, req, rsp interface{}) error {
+	if this.err != nil {
+		return this.err
+	}
+
+	strs := strings.Split(name, ".")
+	if len(strs) < 3 {
+		return errors.New("call service name is unvalid")
+	}
+
+	basePath := strs[0]
+	svcName := strs[1]
+	methodName := strings.Join(strs[2:], ".")
+
+	if basePath == "" || svcName == "" || methodName == "" {
+		return errors.New("call service name is unvalid")
+	}
+
+	var err error
+	if Config.Mode == "dev" {
+		err = this.callInProcess(svcName, methodName, req, rsp)
+	} else {
+		err = this.callDiscovery(basePath, svcName, methodName, req, rsp)
+	}
+
+	return err
 }

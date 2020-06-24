@@ -14,6 +14,8 @@ type Cfg struct {
 	Redis    *redisConfig   `mapstructure:"redis"`
 	Mongo    *mongoConfig   `mapstructure:"mongo"`
 	Client   clientConfig   `mapstructure:"client"`
+	Logger   loggerConfig   `mapstructure:"logger"`
+	Mode     string         `mapstrucure:"mod"`
 }
 
 type ServerConfig struct {

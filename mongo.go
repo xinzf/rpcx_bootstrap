@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"errors"
 	"gopkg.in/mgo.v2"
+	"log"
 )
 
 var Mongo *mongo
@@ -36,6 +37,7 @@ func (this *mongo) Init() error {
 	//mgo.SetLogger(log.New(os.Stderr,"mgo: ",log.LstdFlags))
 
 	Mongo.session.SetMode(mgo.Monotonic, true)
+	log.Println("Mongodb init success")
 	return nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/rcrowley/go-metrics"
+	rpcx_client "github.com/smallnest/rpcx/client"
 	rpcx_server "github.com/smallnest/rpcx/server"
 	"github.com/smallnest/rpcx/serverplugin"
 	nettools "github.com/toolkits/net"
@@ -28,11 +29,15 @@ var (
 )
 
 func init() {
+	log.Println("bootstrap init")
 	_runtime.GOMAXPROCS(_runtime.NumCPU())
 
 	ips, err := nettools.IntranetIP()
 	if err != nil {
 		log.Fatalln(err)
+	}
+	if len(ips) == 0 {
+		log.Fatalln("cant't get local ip")
 	}
 	localIP = ips[0]
 
@@ -45,6 +50,10 @@ func init() {
 
 	err = ReadConfig("config", &Config, func(i interface{}) error {
 		c := i.(*Cfg)
+		if c.Mode == "" {
+			c.Mode = "dev"
+		}
+
 		if c.Server.Name == "" {
 			return errors.New("server's name is empty")
 		}
@@ -90,6 +99,9 @@ func init() {
 				return err
 			}
 		}
+		if err = Logger.init(); err != nil {
+			return err
+		}
 		return nil
 	})
 
@@ -102,18 +114,22 @@ func init() {
 		rpcx_server.WithWriteTimeout(time.Duration(Config.Server.WriteTimeout)*time.Second),
 	)
 
-	r := &serverplugin.ConsulRegisterPlugin{
-		ServiceAddress: "tcp@" + Config.Server.String(),
-		ConsulServers:  []string{Config.Register.Addr},
-		BasePath:       Config.Server.Name,
-		Metrics:        metrics.NewRegistry(),
-		UpdateInterval: time.Minute,
+	if Config.Mode == "dev" {
+		server.Plugins.Add(rpcx_client.InprocessClient)
+	} else {
+		r := &serverplugin.ConsulRegisterPlugin{
+			ServiceAddress: "tcp@" + Config.Server.String(),
+			ConsulServers:  []string{Config.Register.Addr},
+			BasePath:       Config.Server.Name,
+			Metrics:        metrics.NewRegistry(),
+			UpdateInterval: time.Minute,
+		}
+		err = r.Start()
+		if err != nil {
+			log.Println(err)
+		}
+		server.Plugins.Add(r)
 	}
-	err = r.Start()
-	if err != nil {
-		log.Println(err)
-	}
-	server.Plugins.Add(r)
 }
 
 type Initialization func(*rpcx_server.Server) error
