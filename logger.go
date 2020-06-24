@@ -184,6 +184,10 @@ func (l *logger) Dump(keysAndValues ...interface{}) {
 	l.lg.Debugw("Dump", arr...)
 }
 
+func (l *logger) Print(v ...interface{}) {
+	l.Info(v)
+}
+
 //拼接完整的数组
 func (logger) coupArray(kv []interface{}) []interface{} {
 	if len(kv)%2 != 0 {

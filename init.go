@@ -29,7 +29,6 @@ var (
 )
 
 func init() {
-	log.Println("bootstrap init")
 	_runtime.GOMAXPROCS(_runtime.NumCPU())
 
 	ips, err := nettools.IntranetIP()
@@ -56,6 +55,10 @@ func init() {
 
 		if c.Server.Name == "" {
 			return errors.New("server's name is empty")
+		}
+
+		if err = Logger.init(); err != nil {
+			return err
 		}
 
 		if c.Server.Proto == "" {
@@ -86,27 +89,26 @@ func init() {
 			if err := DB.Init(); err != nil {
 				return err
 			}
-			log.Println("Db init success")
+			Logger.Info("Db init success")
 		}
 		if c.Redis != nil {
 			if err := Redis.Init(); err != nil {
 				return err
 			}
-			log.Println("Redis init success")
+			Logger.Info("Redis init success")
 		}
 		if c.Mongo != nil {
 			if err := Mongo.Init(); err != nil {
 				return err
 			}
 		}
-		if err = Logger.init(); err != nil {
-			return err
-		}
+
 		return nil
 	})
 
 	if err != nil {
-		log.Fatalln(err)
+		Logger.Fatal(err)
+		return
 	}
 
 	server = rpcx_server.NewServer(
@@ -126,10 +128,12 @@ func init() {
 		}
 		err = r.Start()
 		if err != nil {
-			log.Println(err)
+			Logger.Fatal(err)
 		}
 		server.Plugins.Add(r)
 	}
+
+	Logger.Info("bootstrap init success")
 }
 
 type Initialization func(*rpcx_server.Server) error
@@ -137,24 +141,25 @@ type Initialization func(*rpcx_server.Server) error
 func Run(ctx context.Context, initFn ...Initialization) {
 	for _, fn := range initFn {
 		if err := fn(server); err != nil {
-			log.Fatalln(err)
+			Logger.Fatal(err)
+			return
 		}
 	}
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
-	log.Println(fmt.Sprintf("server listen: %s", Config.Server.String()))
+	Logger.Info(fmt.Sprintf("server listen: %s", Config.Server.String()))
 	go server.Serve(Config.Server.Proto, Config.Server.String())
 
 	<-ch
 
 	server.UnregisterAll()
 	server.Shutdown(ctx)
-	log.Println("server stopped")
+	Logger.Info("server stopped")
 }
 
 func Register(name string, hdl interface{}) error {
-	log.Println(fmt.Sprintf("register service: %s/%s", Config.Server.Name, name))
+	Logger.Info(fmt.Sprintf("register service: %s/%s", Config.Server.Name, name))
 	return server.RegisterName(name, hdl, "")
 }

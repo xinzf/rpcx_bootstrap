@@ -55,6 +55,7 @@ func (db *database) Init() error {
 	}
 
 	d.LogMode(Config.Db.Log)
+	d.SetLogger(Logger)
 
 	unixMilli := func(t time.Time) int64 {
 		return t.UnixNano() / 1e6
