@@ -92,13 +92,13 @@ func init() {
 			Logger.Info("Db init success")
 		}
 		if c.Redis != nil {
-			if err := Redis.Init(); err != nil {
+			if err := Redis.init(); err != nil {
 				return err
 			}
 			Logger.Info("Redis init success")
 		}
 		if c.Mongo != nil {
-			if err := Mongo.Init(); err != nil {
+			if err := Mongo.init(); err != nil {
 				return err
 			}
 		}

@@ -6,6 +6,7 @@ import (
 )
 
 var Mongo *mongo
+var _mongoInit bool
 
 type mongo struct {
 	session *mgo.Session
@@ -16,7 +17,12 @@ type mongoConfig struct {
 	Debug bool   `mapstructure:"debug"`
 }
 
-func (this *mongo) Init() error {
+func (this *mongo) init() error {
+	if _mongoInit {
+		return nil
+	}
+
+	_mongoInit = true
 	Mongo = new(mongo)
 	if Config.Mongo.Addr == "" {
 		return errors.New("mongo config's addr is empty")

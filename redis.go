@@ -6,6 +6,7 @@ import (
 )
 
 var Redis *_redis
+var _redisInit bool
 
 type redisConfig struct {
 	Addr string `mapstructure:"addr"`
@@ -17,7 +18,12 @@ type _redis struct {
 	client *redis.Client
 }
 
-func (this *_redis) Init() error {
+func (this *_redis) init() error {
+	if _redisInit {
+		return nil
+	}
+
+	_redisInit = true
 	Redis = &_redis{}
 	if Config.Redis.Addr == "" {
 		return errors.New("redis config's addr is empty")
