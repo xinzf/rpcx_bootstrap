@@ -68,6 +68,9 @@ func (this *client) callDiscovery(basePath, svcPath, svcMethod string, req, rsp 
 		options.CompressType = protocol.Gzip
 	}
 
+	options.Heartbeat = true
+	options.HeartbeatInterval = time.Second
+
 	d := rpcx_client.NewConsulDiscoveryTemplate(basePath, []string{Config.Client.Register.Addr}, nil)
 	oneClient := rpcx_client.NewOneClient(rpcx_client.Failover, rpcx_client.RandomSelect, d, options)
 	defer oneClient.Close()

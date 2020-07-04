@@ -185,7 +185,12 @@ func (l *logger) Dump(keysAndValues ...interface{}) {
 }
 
 func (l *logger) Print(v ...interface{}) {
-	l.Info(v)
+	l.Info("DB", v)
+}
+
+func (l *logger) Output(calldepth int, s string) error {
+	l.Info("MongoDB", s)
+	return nil
 }
 
 //拼接完整的数组

@@ -32,8 +32,13 @@ func (s *dbConfig) String() string {
 }
 
 var DB *database
+var _dbinit bool
 
-func (db *database) Init() error {
+func (db *database) init() error {
+	if _dbinit {
+		return nil
+	}
+	_dbinit = true
 	DB = &database{}
 
 	if Config.Db.Addr == "" {

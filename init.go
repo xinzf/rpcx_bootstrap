@@ -86,7 +86,7 @@ func init() {
 			c.Register.Addr = "http://127.0.0.1:8500"
 		}
 		if c.Db != nil {
-			if err := DB.Init(); err != nil {
+			if err := DB.init(); err != nil {
 				return err
 			}
 			Logger.Info("Db init success")
