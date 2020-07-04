@@ -91,9 +91,9 @@ func (db *database) init() error {
 }
 
 func (db *database) Use() *gorm.DB {
-	return db.connection
+	return db.connection.New()
 }
 
 func (db *database) Close() {
-	DB.connection.Close()
+	db.connection.Close()
 }

@@ -136,7 +136,7 @@ func init() {
 	Logger.Info("bootstrap init success")
 }
 
-type Initialization func(*rpcx_server.Server) error
+type Initialization func(srv *rpcx_server.Server) error
 
 func Run(ctx context.Context, initFn ...Initialization) {
 	for _, fn := range initFn {
