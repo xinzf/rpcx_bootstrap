@@ -15,6 +15,7 @@ type mongo struct {
 type mongoConfig struct {
 	Addr  string `mapstructure:"addr"`
 	Debug bool   `mapstructure:"debug"`
+	Name  string `mapstructure:"name"`
 }
 
 func (this *mongo) init() error {
@@ -28,9 +29,9 @@ func (this *mongo) init() error {
 		return errors.New("mongo config's addr is empty")
 	}
 
-	//if Config.Mongo.Name == "" {
-	//    return errors.New("mongo config's name is empty")
-	//}
+	if Config.Mongo.Name == "" {
+		return errors.New("mongo config's name is empty")
+	}
 
 	var err error
 	Mongo.session, err = mgo.Dial(Config.Mongo.Addr)
@@ -47,10 +48,10 @@ func (this *mongo) init() error {
 	return nil
 }
 
-//func (this *mongo) Use() *mgo.Database {
-//    s := this.session.Copy()
-//    return s.DB(Config.Mongo.Name)
-//}
+func (this *mongo) Use(name string) *mgo.Collection {
+	s := this.session.Copy()
+	return s.DB(Config.Mongo.Name).C(name)
+}
 
 func (this *mongo) Close() {
 	this.session.Close()
